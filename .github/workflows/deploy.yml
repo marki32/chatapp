@@ -1,45 +1,36 @@
-name: Deploy to Server
+# This is a basic workflow to help you get started with Actions
 
+name: CI
+
+# Controls when the workflow will run
 on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches:
-      - main  # This workflow triggers when changes are pushed to the 'main' branch
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  deploy:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
+    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Step 1: Checkout the latest code from the repository
-      - name: Checkout code
-        uses: actions/checkout@v3
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4
 
-      # Step 2: Set up SSH
-      - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.5.3
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  # Add SSH key in GitHub Secrets
+      # Runs a single command using the runners shell
+      - name: Run a one-line script
+        run: echo Hello, world!
 
-      # Step 3: Run deployment commands on the remote server
-      - name: Deploy to Server
-        env:
-          SERVER_USER: ${{ secrets.SERVER_USER }}         # Server username from GitHub Secrets
-          SERVER_HOST: ${{ secrets.SERVER_HOST }}         # Server IP or domain from GitHub Secrets
-          DEPLOY_PATH: /path/to/your/deployment/folder    # Path on the remote server
+      # Runs a set of commands using the runners shell
+      - name: Run a multi-line script
         run: |
-          echo "Starting deployment on $SERVER_HOST"
-          ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << EOF
-            # Navigate to your deployment folder
-            cd $DEPLOY_PATH
-
-            # Pull the latest changes
-            git pull origin main
-
-            # Install dependencies (for Node.js projects, adjust as necessary)
-            npm install
-
-            # Restart server (adjust command to your server setup, e.g., PM2, systemctl)
-            pm2 restart myapp  # Or replace with appropriate command
-
-            echo "Deployment complete!"
-          EOF
+          echo Add other actions to build,
+          echo test, and deploy your project.
