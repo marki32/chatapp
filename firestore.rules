@@ -1,0 +1,71 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isValidPhoto() {
+      let photo = request.resource.data;
+      return photo.url is string &&
+             photo.caption is string &&
+             photo.userId == request.auth.uid &&
+             photo.createdAt is timestamp &&
+             photo.likes is number &&
+             photo.likes == 0 &&
+             photo.comments is list;
+    }
+    
+    function isValidPhotoUpdate() {
+      let diff = request.resource.data.diff(resource.data);
+      return diff.affectedKeys().hasOnly(['likes', 'comments']) ||
+             isOwner(resource.data.userId);
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if true;
+      
+      allow create: if isSignedIn() && 
+                   request.auth.uid == userId &&
+                   request.resource.data.username is string &&
+                   request.resource.data.avatar is string;
+      
+      allow update: if isOwner(userId) ||
+                   // Allow updating followers/following
+                   (isSignedIn() && 
+                    request.resource.data.diff(resource.data).affectedKeys()
+                      .hasOnly(['followers', 'following', 'followersList', 'followingList']));
+      
+      allow delete: if false; // Prevent user deletion
+    }
+
+    // Photos collection
+    match /photos/{photoId} {
+      allow read: if true;
+      
+      allow create: if isSignedIn() && isValidPhoto();
+      
+      allow update: if isSignedIn() && isValidPhotoUpdate();
+      
+      allow delete: if isOwner(resource.data.userId);
+    }
+
+    // Comments subcollection
+    match /photos/{photoId}/comments/{commentId} {
+      allow read: if true;
+      
+      allow create: if isSignedIn() &&
+                   request.resource.data.userId == request.auth.uid &&
+                   request.resource.data.content is string &&
+                   request.resource.data.createdAt is timestamp;
+      
+      allow update, delete: if isOwner(resource.data.userId);
+    }
+  }
+}

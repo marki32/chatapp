@@ -1,0 +1,45 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main  # This workflow triggers when changes are pushed to the 'main' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Checkout the latest code from the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Step 2: Set up SSH
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}  # Add SSH key in GitHub Secrets
+
+      # Step 3: Run deployment commands on the remote server
+      - name: Deploy to Server
+        env:
+          SERVER_USER: ${{ secrets.SERVER_USER }}         # Server username from GitHub Secrets
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}         # Server IP or domain from GitHub Secrets
+          DEPLOY_PATH: /path/to/your/deployment/folder    # Path on the remote server
+        run: |
+          echo "Starting deployment on $SERVER_HOST"
+          ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_HOST << EOF
+            # Navigate to your deployment folder
+            cd $DEPLOY_PATH
+
+            # Pull the latest changes
+            git pull origin main
+
+            # Install dependencies (for Node.js projects, adjust as necessary)
+            npm install
+
+            # Restart server (adjust command to your server setup, e.g., PM2, systemctl)
+            pm2 restart myapp  # Or replace with appropriate command
+
+            echo "Deployment complete!"
+          EOF

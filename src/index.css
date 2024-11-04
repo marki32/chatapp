@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply antialiased;
+  }
+
+  #root {
+    @apply min-h-screen;
+  }
+}
+
+@layer components {
+  .filter-normal {
+    filter: none;
+  }
+  
+  .filter-mono {
+    filter: grayscale(100%);
+  }
+  
+  .filter-warm {
+    filter: sepia(50%);
+  }
+  
+  .filter-cool {
+    filter: saturate(150%) hue-rotate(30deg);
+  }
+  
+  .filter-vintage {
+    filter: sepia(50%) saturate(80%);
+  }
+}
+
+/* Ensure dark mode persists */
+:root {
+  color-scheme: light dark;
+}
+
+.dark {
+  color-scheme: dark;
+}
